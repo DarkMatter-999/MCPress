@@ -1,0 +1,17 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+echo "Running PHP CodeSniffer (phpcs)..."
+
+# Run phpcs on all staged PHP files
+FILES=$(git diff --cached --name-only --diff-filter=ACM | grep '\.php$')
+if [ -n "$FILES" ]; then
+  ./vendor/bin/phpcs $FILES
+  STATUS=$?
+  if [ $STATUS -ne 0 ]; then
+    echo "✖ PHPCS failed. Fix the issues before pushing."
+    exit 1
+  fi
+else
+  echo "No PHP files to check."
+fi
