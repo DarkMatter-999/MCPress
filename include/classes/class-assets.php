@@ -4,7 +4,7 @@
  *
  * Main Theme Asset class file for the Plugin. This class enqueues the necessary scripts and styles.
  *
- * @package DarkMatter_Plugin
+ * @package DarkMatter_Package
  **/
 
 namespace DarkMatter_Plugin;
@@ -19,6 +19,7 @@ use DarkMatter_Plugin\Traits\Singleton;
  * @since 1.0.0
  **/
 class Assets {
+
 
 	use Singleton;
 

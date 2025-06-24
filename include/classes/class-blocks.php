@@ -2,7 +2,7 @@
 /**
  * Block Class file for the Plugin.
  *
- * @package DarkMatter_Plugin
+ * @package DarkMatter_Package
  */
 
 namespace DarkMatter_Plugin;
@@ -13,6 +13,7 @@ use DarkMatter_Plugin\Traits\Singleton;
  * Block Class file for the Plugin.
  */
 class Blocks {
+
 
 	use Singleton;
 
@@ -45,7 +46,7 @@ class Blocks {
 	 * @param  WP_Block_Editor_Context $post       The current block editor context.
 	 * @return array
 	 */
-	public function add_custom_block_category( $categories, $post ) {   // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed -- no use of block context.
+	public function add_custom_block_category( $categories, $post ) {    // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed -- no use of block context.
 		return array_merge(
 			$categories,
 			array(

@@ -4,12 +4,13 @@
  *
  * This file provides the definition of the Singleton trait for use elsewhere.
  *
- * @package DarkMatter_Plugin
+ * @package DarkMatter_Package
  **/
 
 namespace DarkMatter_Plugin\Traits;
 
 trait Singleton {
+
 
 	/**
 	 * Instance of the singleton class.
@@ -35,17 +36,20 @@ trait Singleton {
 	 *
 	 * @return void
 	 */
-	private function __construct() {}
+	private function __construct() {
+	}
 	/**
 	 * __clone
 	 *
 	 * @return void
 	 */
-	public function __clone() {}
+	public function __clone() {
+	}
 	/**
 	 * __wakeup
 	 *
 	 * @return void
 	 */
-	public function __wakeup() {}
+	public function __wakeup() {
+	}
 }

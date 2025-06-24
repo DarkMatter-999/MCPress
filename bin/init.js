@@ -24,9 +24,11 @@ function replaceInIncludes() {
   const includesDir = path.join(process.cwd(), "include");
   const targetNamespace = "DarkMatter_Plugin";
   const targetPathConst = "DMP_PLUGIN_PATH";
+  const targetPackage = "DarkMatter_Package";
 
   const replacementNamespace = answers.namespace;
   const replacementPathConst = `${getPrefix(answers.pluginName)}_PLUGIN_PATH`;
+  const replacementPackage = answers.package;
 
   if (!fs.existsSync(includesDir)) {
     console.warn(`⚠️ Directory not found: ${includesDir}`);
@@ -45,7 +47,8 @@ function replaceInIncludes() {
         let content = fs.readFileSync(fullPath, "utf8");
         const updated = content
           .replace(new RegExp(targetNamespace, "g"), replacementNamespace)
-          .replace(new RegExp(targetPathConst, "g"), replacementPathConst);
+          .replace(new RegExp(targetPathConst, "g"), replacementPathConst)
+          .replace(new RegExp(targetPackage, "g"), replacementPackage);
 
         if (updated !== content) {
           fs.writeFileSync(fullPath, updated, "utf8");

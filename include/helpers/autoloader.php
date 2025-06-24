@@ -4,7 +4,7 @@
  *
  * This file provides the autoloader for the Plugin.
  *
- * @package DarkMatter_Plugin
+ * @package DarkMatter_Package
  **/
 
 namespace DarkMatter_Plugin\Helpers;
