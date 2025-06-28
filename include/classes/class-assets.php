@@ -20,7 +20,6 @@ use DarkMatter_Plugin\Traits\Singleton;
  **/
 class Assets {
 
-
 	use Singleton;
 
 	/**

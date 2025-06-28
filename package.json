@@ -6,7 +6,15 @@
     "init": "node ./bin/init.js",
     "start": "wp-scripts start",
     "build": "wp-scripts build",
-    "prepare": "husky"
+    "prepare": "husky",
+    "lint": "npm-run-all --parallel lint:*",
+    "lint:css": "wp-scripts lint-style",
+    "lint:css:fix": "npm run lint:css -- --fix",
+    "lint:js": "wp-scripts lint-js",
+    "lint:js:fix": "npm run lint:js -- --fix",
+    "lint:php": "vendor/bin/phpcs .",
+    "lint:php:fix": "vendor/bin/phpcbf .",
+    "lint:staged": "lint-staged"
   },
   "author": "",
   "license": "ISC",
@@ -16,5 +24,9 @@
     "husky": "^9.1.7",
     "path": "^0.12.7",
     "webpack-remove-empty-scripts": "^1.1.1"
+  },
+  "dependencies": {
+    "lint-staged": "^16.1.2",
+    "npm-run-all": "^4.1.5"
   }
 }
