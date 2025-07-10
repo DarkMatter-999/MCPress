@@ -2,12 +2,12 @@
 /**
  * Block Class file for the Plugin.
  *
- * @package DarkMatter_Package
+ * @package MCPress
  */
 
-namespace DarkMatter_Plugin;
+namespace MCPress;
 
-use DarkMatter_Plugin\Traits\Singleton;
+use MCPress\Traits\Singleton;
 
 /**
  * Block Class file for the Plugin.
@@ -34,7 +34,7 @@ class Blocks {
 	 */
 	public function register() {
 		register_block_type(
-			DMP_PLUGIN_PATH . 'assets/build/blocks/block'
+			MCP_PLUGIN_PATH . 'assets/build/blocks/block'
 		);
 	}
 

@@ -4,15 +4,15 @@
  *
  * This file provides the autoloader for the Plugin.
  *
- * @package DarkMatter_Package
+ * @package MCPress
  **/
 
-namespace DarkMatter_Plugin\Helpers;
+namespace MCPress\Helpers;
 
 spl_autoload_register(
 	function ( $what ) {
 		$split = explode( '\\', $what );
-		if ( 'DarkMatter_Plugin' !== $split[0] ) {
+		if ( 'MCPress' !== $split[0] ) {
 			return;
 		}
 		$base_dir = 'include/';
@@ -37,8 +37,8 @@ spl_autoload_register(
 
 		$file_path = implode( '', $split );
 
-		if ( file_exists( DMP_PLUGIN_PATH . $file_path ) ) {
-			include_once DMP_PLUGIN_PATH . $file_path;
+		if ( file_exists( MCP_PLUGIN_PATH . $file_path ) ) {
+			include_once MCP_PLUGIN_PATH . $file_path;
 		}
 	}
 );

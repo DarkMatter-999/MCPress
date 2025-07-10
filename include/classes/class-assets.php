@@ -4,12 +4,12 @@
  *
  * Main Theme Asset class file for the Plugin. This class enqueues the necessary scripts and styles.
  *
- * @package DarkMatter_Package
+ * @package MCPress
  **/
 
-namespace DarkMatter_Plugin;
+namespace MCPress;
 
-use DarkMatter_Plugin\Traits\Singleton;
+use MCPress\Traits\Singleton;
 
 /**
  * Main Assets Class File
@@ -45,19 +45,19 @@ class Assets {
 	 * @return void
 	 */
 	public function enqueue_assets() {
-		$style_asset = include DMP_PLUGIN_PATH . 'assets/build/css/main.asset.php';
+		$style_asset = include MCP_PLUGIN_PATH . 'assets/build/css/main.asset.php';
 		wp_enqueue_style(
 			'main-css',
-			DMP_PLUGIN_PATH . 'assets/build/css/main.css',
+			MCP_PLUGIN_PATH . 'assets/build/css/main.css',
 			$style_asset['dependencies'],
 			$style_asset['version']
 		);
 
-		$script_asset = include DMP_PLUGIN_PATH . 'assets/build/js/main.asset.php';
+		$script_asset = include MCP_PLUGIN_PATH . 'assets/build/js/main.asset.php';
 
 		wp_enqueue_script(
 			'main-js',
-			DMP_PLUGIN_PATH . 'assets/build/js/main.js',
+			MCP_PLUGIN_PATH . 'assets/build/js/main.js',
 			$script_asset['dependencies'],
 			$script_asset['version'],
 			true
@@ -70,19 +70,19 @@ class Assets {
 	 * @return void
 	 */
 	public function enqueue_block_assets() {
-		$style_asset = include DMP_PLUGIN_PATH . 'assets/build/css/screen.asset.php';
+		$style_asset = include MCP_PLUGIN_PATH . 'assets/build/css/screen.asset.php';
 		wp_enqueue_style(
 			'block-css',
-			DMP_PLUGIN_PATH . 'assets/build/css/screen.css',
+			MCP_PLUGIN_PATH . 'assets/build/css/screen.css',
 			$style_asset['dependencies'],
 			$style_asset['version']
 		);
 
-		$script_asset = include DMP_PLUGIN_PATH . 'assets/build/js/screen.asset.php';
+		$script_asset = include MCP_PLUGIN_PATH . 'assets/build/js/screen.asset.php';
 
 		wp_enqueue_script(
 			'block-js',
-			DMP_PLUGIN_PATH . 'assets/build/js/screen.js',
+			MCP_PLUGIN_PATH . 'assets/build/js/screen.js',
 			$script_asset['dependencies'],
 			$script_asset['version'],
 			true
@@ -95,20 +95,20 @@ class Assets {
 	 * @return void
 	 */
 	public function enqueue_block_editor_assets() {
-		$style_asset = include DMP_PLUGIN_PATH . 'assets/build/css/editor.asset.php';
+		$style_asset = include MCP_PLUGIN_PATH . 'assets/build/css/editor.asset.php';
 
 		wp_enqueue_style(
 			'editor-css',
-			DMP_PLUGIN_PATH . 'assets/build/css/editor.css',
+			MCP_PLUGIN_PATH . 'assets/build/css/editor.css',
 			$style_asset['dependencies'],
 			$style_asset['version']
 		);
 
-		$script_asset = include DMP_PLUGIN_PATH . 'assets/build/js/editor.asset.php';
+		$script_asset = include MCP_PLUGIN_PATH . 'assets/build/js/editor.asset.php';
 
 		wp_enqueue_script(
 			'editor-js',
-			DMP_PLUGIN_PATH . 'assets/build/js/editor.js',
+			MCP_PLUGIN_PATH . 'assets/build/js/editor.js',
 			$script_asset['dependencies'],
 			$script_asset['version'],
 			true

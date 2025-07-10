@@ -2,12 +2,12 @@
 /**
  * Main Plugin File for Plugin.
  *
- * @package DarkMatter_Package
+ * @package MCPress
  */
 
-namespace DarkMatter_Plugin;
+namespace MCPress;
 
-use DarkMatter_Plugin\Traits\Singleton;
+use MCPress\Traits\Singleton;
 
 /**
  * Main Plugin File for the Plugin.
