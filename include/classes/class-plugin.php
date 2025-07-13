@@ -24,6 +24,6 @@ class Plugin {
 	 */
 	public function __construct() {
 		Assets::get_instance();
-		// `Blocks::get_instance();` // Comment this out when using custom blocks registered via Blocks class.
+		Settings::get_instance();
 	}
 }
