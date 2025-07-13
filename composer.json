@@ -7,5 +7,8 @@
         "allow-plugins": {
             "dealerdirect/phpcodesniffer-composer-installer": true
         }
+    },
+    "require": {
+        "inspector-apm/neuron-ai": "^1.15"
     }
 }
