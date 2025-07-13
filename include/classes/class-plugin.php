@@ -25,5 +25,7 @@ class Plugin {
 	public function __construct() {
 		Assets::get_instance();
 		Settings::get_instance();
+		MCP_LLM_API::get_instance();
+		Tools_Loader::get_instance();
 	}
 }

@@ -19,10 +19,36 @@ class MCP_LLM_API {
 	const OPENAI_API_KEY      = 'mcpress_openai_api_key';
 
 	/**
+	 * All tools which will be used by the LLM.
+	 *
+	 * @var array
+	 */
+	public $tools = array();
+
+	/**
+	 * Schemas for all tools.
+	 *
+	 * @var array
+	 */
+	public $schemas = array();
+
+	/**
 	 * Constructor for the LLM API class
 	 *
 	 * @return void
 	 */
 	public function __construct() {
+		add_action( 'init', array( $this, 'register' ) );
+	}
+
+	/**
+	 * Register all the tools for the LLM.
+	 */
+	public function register() {
+		do_action( 'mcpress_register_tools' );
+
+		$this->tools = apply_filters( 'mcpress_available_tools', $this->tools );
+
+		$this->schemas = apply_filters( 'mcpress_tools_schema', $this->schemas );
 	}
 }
