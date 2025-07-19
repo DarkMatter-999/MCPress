@@ -86,8 +86,9 @@ class Assets {
 				'mcpress-admin-js',
 				'mcpress_vars',
 				array(
-					'chat_url' => esc_url_raw( site_url( 'wp-json/mcp/v1/chat' ) ),
-					'nonce'    => wp_create_nonce( 'wp_rest' ),
+					'chat_url'         => esc_url_raw( site_url( 'wp-json/mcp/v1/chat' ) ),
+					'execute_tool_url' => esc_url_raw( site_url( 'wp-json/mcp/v1/execute-tool' ) ),
+					'nonce'            => wp_create_nonce( 'wp_rest' ),
 				)
 			);
 		}
