@@ -87,7 +87,10 @@ trait LLM_Tool {
 		if ( ! is_array( $schemas ) ) {
 			$schemas = array();
 		}
-		$schemas[] = $this->schema();
+		$schemas[] = array(
+			'type'     => 'function',
+			'function' => $this->schema(),
+		);
 		return $schemas;
 	}
 }

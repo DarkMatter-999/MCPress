@@ -19,7 +19,7 @@ class MCP_LLM_API {
 	const OPENAI_API_KEY      = 'mcpress_openai_api_key';
 
 	/**
-	 * All tools which will be used by the LLM.
+	 * All tools which will be used by the LLMavailable_tools.
 	 *
 	 * @var array
 	 */

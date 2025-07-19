@@ -1,0 +1,198 @@
+/* General Admin Page Layout */
+.mcpress-admin-page {
+	margin-top: 20px;
+}
+
+.mcpress-chat-message.tool-execution-message {
+	background-color: #e0ffe0;
+	color: #333;
+	border: 1px dashed #90ee90;
+	font-size: 0.9em;
+	padding: 10px 15px;
+	border-radius: 5px;
+	margin-left: auto;
+	margin-right: auto;
+	max-width: 95%;
+}
+
+.mcpress-chat-message code {
+	background-color: #f0f0f0;
+	padding: 2px 4px;
+	border-radius: 3px;
+	font-family: monospace;
+}
+
+.mcpress-card-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+	gap: 20px;
+	margin-top: 20px;
+}
+
+.mcpress-card {
+	background: #fff;
+	border: 1px solid #c3c4c7;
+	box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
+	padding: 20px;
+	box-sizing: border-box;
+	border-radius: 5px;
+}
+
+.mcpress-card h2 {
+	margin-top: 0;
+	margin-bottom: 15px;
+	padding-bottom: 10px;
+	border-bottom: 1px solid #eee;
+	font-size: 1.3em;
+}
+
+.mcpress-card h3 {
+	margin-top: 25px;
+	margin-bottom: 10px;
+	font-size: 1.1em;
+}
+
+.mcpress-card pre {
+	background: #f8f8f8;
+	border: 1px solid #ddd;
+	padding: 10px;
+	overflow-x: auto;
+	font-size: 0.9em;
+	line-height: 1.4;
+	max-height: 300px;
+	white-space: pre-wrap;
+	word-wrap: break-word;
+}
+
+.mcpress-card .form-table th {
+	padding-left: 0;
+}
+
+.mcpress-card .form-table td {
+	padding-right: 0;
+}
+
+.mcpress-card.full-width {
+	grid-column: 1 / -1;
+}
+
+/* Chat Specific Styles */
+.mcpress-chat-container {
+	border: 1px solid #c3c4c7;
+	border-radius: 5px;
+	overflow: hidden;
+	display: flex;
+	flex-direction: column;
+	height: 450px;
+	background: #fefefe;
+}
+
+.mcpress-chat-log {
+	flex-grow: 1;
+	padding: 15px;
+	overflow-y: auto;
+	background: #fbfbfb;
+	border-bottom: 1px solid #eee;
+}
+
+.mcpress-chat-message {
+	margin-bottom: 10px;
+	padding: 8px 12px;
+	border-radius: 15px;
+	max-width: 80%;
+	word-wrap: break-word;
+	line-height: 1.5;
+}
+
+.mcpress-chat-message:last-child {
+	margin-bottom: 0;
+}
+
+.mcpress-chat-message strong {
+	font-weight: 600;
+}
+
+.mcpress-chat-message.user-message {
+	background-color: #e6f7ff; /* Light blue */
+	color: #333;
+	align-self: flex-end;
+	margin-left: auto;
+	border-bottom-right-radius: 2px;
+}
+
+.mcpress-chat-message.llm-message {
+	background-color: #f0f0f0; /* Light grey */
+	color: #333;
+	align-self: flex-start;
+	margin-right: auto;
+	border-bottom-left-radius: 2px;
+}
+
+.mcpress-chat-message.system-message {
+	background-color: #fffacd; /* Lemon Chiffon */
+	color: #555;
+	text-align: center;
+	width: 100%;
+	box-sizing: border-box;
+	margin-left: 0;
+	margin-right: 0;
+	font-size: 0.9em;
+	padding: 5px 10px;
+	border-radius: 5px;
+}
+
+.mcpress-chat-message.error-message {
+	background-color: #ffebe8; /* Light red */
+	color: #a00;
+	border: 1px solid #a00;
+}
+
+.mcpress-chat-input {
+	display: flex;
+	padding: 15px;
+	background: #fff;
+	align-items: center;
+	gap: 10px;
+}
+
+.mcpress-chat-input textarea {
+	flex-grow: 1;
+	resize: none;
+	height: 40px; /* Initial height */
+	min-height: 40px;
+	max-height: 120px;
+	padding: 8px 12px;
+	border: 1px solid #c3c4c7;
+	border-radius: 5px;
+	font-size: 14px;
+	line-height: 1.4;
+	box-shadow: none;
+	transition: all 0.2s ease-in-out;
+}
+
+.mcpress-chat-input textarea:focus {
+	border-color: #007cba;
+	box-shadow: 0 0 0 1px #007cba;
+	outline: none;
+}
+
+.mcpress-chat-input .button-primary {
+	flex-shrink: 0;
+	height: 40px;
+	line-height: 1;
+	padding: 0 15px;
+}
+
+.mcpress-chat-input .spinner {
+	margin: 0;
+	visibility: hidden;
+}
+
+.mcpress-chat-input .spinner.is-active {
+	visibility: visible;
+}
+
+.error-message {
+	color: #a00;
+	font-weight: 700;
+}

@@ -29,14 +29,7 @@ class Assets {
 	 */
 	public function __construct() {
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_assets' ) );
-		add_action( 'enqueue_block_assets', array( $this, 'enqueue_block_assets' ) );
-		add_action(
-			'enqueue_block_editor_assets',
-			array(
-				$this,
-				'enqueue_block_editor_assets',
-			)
-		);
+		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_scripts' ) );
 	}
 
 	/**
@@ -48,7 +41,7 @@ class Assets {
 		$style_asset = include MCP_PLUGIN_PATH . 'assets/build/css/main.asset.php';
 		wp_enqueue_style(
 			'main-css',
-			MCP_PLUGIN_PATH . 'assets/build/css/main.css',
+			MCP_PLUGIN_URL . 'assets/build/css/main.css',
 			$style_asset['dependencies'],
 			$style_asset['version']
 		);
@@ -57,7 +50,7 @@ class Assets {
 
 		wp_enqueue_script(
 			'main-js',
-			MCP_PLUGIN_PATH . 'assets/build/js/main.js',
+			MCP_PLUGIN_URL . 'assets/build/js/main.js',
 			$script_asset['dependencies'],
 			$script_asset['version'],
 			true
@@ -65,53 +58,38 @@ class Assets {
 	}
 
 	/**
-	 * Enqueues styles and scripts for the frontend.
+	 * Enqueue admin scripts and styles for the Chat UI.
 	 *
-	 * @return void
+	 * @param string $hook The current admin page hook.
 	 */
-	public function enqueue_block_assets() {
-		$style_asset = include MCP_PLUGIN_PATH . 'assets/build/css/screen.asset.php';
+	public function enqueue_admin_scripts( $hook ) {
+
+		$style_asset = include MCP_PLUGIN_PATH . 'assets/build/css/admin.asset.php';
 		wp_enqueue_style(
-			'block-css',
-			MCP_PLUGIN_PATH . 'assets/build/css/screen.css',
+			'mcpress-admin-css',
+			MCP_PLUGIN_URL . 'assets/build/css/admin.css',
 			$style_asset['dependencies'],
 			$style_asset['version']
 		);
 
-		$script_asset = include MCP_PLUGIN_PATH . 'assets/build/js/screen.asset.php';
+		if ( 'toplevel_page_mcpress-dashboard' === $hook ) {
+			$script_asset = include MCP_PLUGIN_PATH . 'assets/build/js/admin.asset.php';
 
-		wp_enqueue_script(
-			'block-js',
-			MCP_PLUGIN_PATH . 'assets/build/js/screen.js',
-			$script_asset['dependencies'],
-			$script_asset['version'],
-			true
-		);
-	}
-
-	/**
-	 * Enqueues styles and scripts for the block editor.
-	 *
-	 * @return void
-	 */
-	public function enqueue_block_editor_assets() {
-		$style_asset = include MCP_PLUGIN_PATH . 'assets/build/css/editor.asset.php';
-
-		wp_enqueue_style(
-			'editor-css',
-			MCP_PLUGIN_PATH . 'assets/build/css/editor.css',
-			$style_asset['dependencies'],
-			$style_asset['version']
-		);
-
-		$script_asset = include MCP_PLUGIN_PATH . 'assets/build/js/editor.asset.php';
-
-		wp_enqueue_script(
-			'editor-js',
-			MCP_PLUGIN_PATH . 'assets/build/js/editor.js',
-			$script_asset['dependencies'],
-			$script_asset['version'],
-			true
-		);
+			wp_enqueue_script(
+				'mcpress-admin-js',
+				MCP_PLUGIN_URL . 'assets/build/js/admin.js',
+				$script_asset['dependencies'],
+				$script_asset['version'],
+				true
+			);
+			wp_localize_script(
+				'mcpress-admin-js',
+				'mcpress_vars',
+				array(
+					'chat_url' => esc_url_raw( site_url( 'wp-json/mcp/v1/chat' ) ),
+					'nonce'    => wp_create_nonce( 'wp_rest' ),
+				)
+			);
+		}
 	}
 }

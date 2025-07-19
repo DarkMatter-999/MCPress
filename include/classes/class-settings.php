@@ -72,11 +72,45 @@ class Settings {
 	 * Render the dashboard page.
 	 */
 	public function render_dashboard_page() {
+		$message      = '';
+		$message_type = 'success';
+
+		$current_api_endpoint = get_option( MCP_LLM_API::OPENAI_API_ENDPOINT, '' );
+		$current_api_key      = get_option( MCP_LLM_API::OPENAI_API_KEY, '' );
 		?>
 		<div class="wrap mcpress-admin-page">
-			<h1><?php esc_html_e( 'MCPress Dashboard', 'mcpress' ); ?></h1>
-			<p><?php esc_html_e( 'Chat Interface will go here', 'mcpress' ); ?></p>
+		<h1><?php esc_html_e( 'MCP LLM Chat', 'mcpress' ); ?></h1>
+
+		<?php if ( $message ) : ?>
+			<div class="notice notice-<?php echo esc_attr( $message_type ); ?> is-dismissible">
+				<p><strong><?php echo esc_html( $message ); ?></strong></p>
+			</div>
+		<?php endif; ?>
+
+		<div class="mcpress-card-grid">
+			<div class="mcpress-card full-width">
+				<h2><?php esc_html_e( 'LLM Chat', 'mcpress' ); ?></h2>
+				<p><?php esc_html_e( 'Enter a message and send it to your configured LLM API. The system prompt informs the LLM about WordPress capabilities.', 'mcpress' ); ?></p>
+
+				<?php if ( empty( $current_api_endpoint ) || empty( $current_api_key ) ) : ?>
+					<p class="error-message"><?php esc_html_e( 'Please configure your LLM API Endpoint and Key above before using the chat.', 'mcpress' ); ?></p>
+				<?php else : ?>
+					<div class="mcpress-chat-container">
+						<div id="mcpress-chat-log" class="mcpress-chat-log">
+							<div class="mcpress-chat-message system-message">
+								<strong>System:</strong> <?php esc_html_e( 'Welcome to the LLM Chat. I am ready to assist.', 'mcpress' ); ?>
+							</div>
+						</div>
+						<div class="mcpress-chat-input">
+							<textarea id="mcpress-user-input" placeholder="<?php esc_attr_e( 'Type your message...', 'mcpress' ); ?>"></textarea>
+							<button id="mcpress-send-button" class="button button-primary"><?php esc_html_e( 'Send', 'mcpress' ); ?></button>
+							<span class="spinner" style="float: none; vertical-align: middle;"></span>
+						</div>
+					</div>
+				<?php endif; ?>
+			</div>
 		</div>
+	</div>
 		<?php
 	}
 
