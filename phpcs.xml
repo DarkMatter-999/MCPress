@@ -11,7 +11,7 @@
     <rule ref="WordPress">
         <exclude name="WordPress.Files.FileName.InvalidClassFileName" />
 		<exclude name="Generic.Functions.CallTimePassByReference" />
-	<rule>
+	</rule>
     <rule ref="VariableAnalysis"/>
     <rule ref="PHPCompatibility" />
     <rule ref="PHPCompatibilityWP">
@@ -36,9 +36,6 @@
         </properties>
     </rule>
 
-    <!-- args -->
-    <arg name="severity" value="1" />
-
     <!-- Set the target directories -->
     <file>mcpress.php</file>
     <folder>includes</folder>
@@ -54,4 +51,5 @@
     <arg name="extensions" value="php,inc"/>
     <arg name="parallel" value="80"/>
     <arg name="cache" value=".phpcs.cache"/>
+    <arg name="severity" value="1" />
 </ruleset>
