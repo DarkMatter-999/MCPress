@@ -1,25 +1,57 @@
 <?xml version="1.0" ?>
-<ruleset name="myplugin">
-	<description>Best practices sniffs for WordPress plugins</description>
 
-	<rule ref="WordPress">
-		<exclude name="WordPress.Files.FileName.InvalidClassFileName" />
+<ruleset
+        name="MCPress"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/squizlabs/PHP_CodeSniffer/master/phpcs.xsd"
+>
+    <description>My Project Coding Standard</description>
+
+    <!-- Set the coding standard -->
+    <rule ref="WordPress">
+        <exclude name="WordPress.Files.FileName.InvalidClassFileName" />
 		<exclude name="Generic.Functions.CallTimePassByReference" />
-	</rule>
+	<rule>
+    <rule ref="VariableAnalysis"/>
+    <rule ref="PHPCompatibility" />
+    <rule ref="PHPCompatibilityWP">
+        <include-pattern>*\.php$</include-pattern>
+    </rule>
 
-	<rule ref="WordPress.WP.I18n">
-		<properties>
-			<property name="text_domain" type="array">
-				<element value="mcpress" />
-				<element value="text-domain-2" />
-			</property>
-		</properties>
-	</rule>
+    <!-- Add the text domain -->
+    <rule ref="WordPress.WP.I18n">
+        <properties>
+            <property name="text_domain" type="array">
+                <element value="mcpress"/>
+            </property>
+        </properties>
+    </rule>
 
-	<arg name="extensions" value="php" />
-	<arg name="severity" value="1" />
+    <!-- Add custom capabilities -->
+    <rule ref="WordPress.WP.Capabilities">
+        <properties>
+            <property name="custom_capabilities" type="array">
+                <element value="manage_mcpress"/>
+            </property>
+        </properties>
+    </rule>
 
-	<exclude-pattern>*/node_modules/*</exclude-pattern>
-	<exclude-pattern>*/vendor/*</exclude-pattern>
-	<exclude-pattern>assets/build/</exclude-pattern>
+    <!-- args -->
+    <arg name="severity" value="1" />
+
+    <!-- Set the target directories -->
+    <file>mcpress.php</file>
+    <folder>includes</folder>
+
+    <!-- Set the excluded directories -->
+    <exclude-pattern>vendor/*</exclude-pattern>
+    <exclude-pattern>tests/*</exclude-pattern>
+    <exclude-pattern>bin/*</exclude-pattern>
+    <exclude-pattern>node_modules/*</exclude-pattern>
+    <exclude-pattern>assets/build/</exclude-pattern>
+
+    <!-- Set the options -->
+    <arg name="extensions" value="php,inc"/>
+    <arg name="parallel" value="80"/>
+    <arg name="cache" value=".phpcs.cache"/>
 </ruleset>
