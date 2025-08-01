@@ -66,14 +66,14 @@ class MCP_Server {
 				'args'                => array(
 					'tool_calls' => array(
 						'required'          => true,
-						'validate_callback' => function ( $param, $request, $key ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed
+						'validate_callback' => function ( $param, $request, $key ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed, VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable
 							return is_array( $param );
 						},
 						'sanitize_callback' => null, // Tools data is complex, let LLM API handle structure.
 					),
 					'messages'   => array(
 						'required'          => true,
-						'validate_callback' => function ( $param, $request, $key ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed
+						'validate_callback' => function ( $param, $request, $key ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed, VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable
 							return is_array( $param );
 						},
 						'sanitize_callback' => null, // Messages array is validated by LLM API.
@@ -89,7 +89,7 @@ class MCP_Server {
 	 * @param WP_REST_Request $request Full details about the request.
 	 * @return bool True if the user has read capability, false otherwise.
 	 */
-	public function permission_check_read( WP_REST_Request $request ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found
+	public function permission_check_read( WP_REST_Request $request ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found, VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable
 		return is_user_logged_in() && current_user_can( 'read' );
 	}
 
@@ -180,7 +180,7 @@ class MCP_Server {
 	 * @param WP_REST_Request $request Full details about the request.
 	 * @return WP_REST_Response Response object.
 	 */
-	public function chat_init_callback( WP_REST_Request $request ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found
+	public function chat_init_callback( WP_REST_Request $request ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found, VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable
 
 		/*
 		* Translators:
@@ -235,9 +235,8 @@ class MCP_Server {
 
 		// Detailed validation of each message object (role, content) might be added later.
 
-		$llm_api         = MCP_LLM_API::get_instance();
-		$tools           = $llm_api->schemas; // Tool schemas for the LLM.
-		$available_tools = $llm_api->tools; // PHP callable tools.
+		$llm_api = MCP_LLM_API::get_instance();
+		$tools   = $llm_api->schemas; // Tool schemas for the LLM.
 
 		// First LLM call.
 		$llm_response = $this->make_llm_request( $messages, $tools );
