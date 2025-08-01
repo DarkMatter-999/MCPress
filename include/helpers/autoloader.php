@@ -9,6 +9,8 @@
 
 namespace MCPress\Helpers;
 
+require_once MCP_PLUGIN_PATH . 'vendor/autoload.php';
+
 spl_autoload_register(
 	function ( $what ) {
 		$split = explode( '\\', $what );

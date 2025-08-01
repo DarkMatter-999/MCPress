@@ -23,6 +23,7 @@ class Plugin {
 	 * @return void
 	 */
 	public function __construct() {
+		Auth::get_instance();
 		Assets::get_instance();
 		Settings::get_instance();
 		MCP_LLM_API::get_instance();

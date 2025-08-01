@@ -60,7 +60,7 @@ class Site_Info_Tool {
 	 * @param array $arguments     Arguments passed to the tool from the LLM (expected to be empty).
 	 * @return string A JSON-encoded string containing the site information.
 	 */
-	public function tool( array $arguments ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found -- arguments not used in this class.
+	public function tool( array $arguments ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found, VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable -- arguments not used in this class.
 		if ( ! function_exists( 'get_bloginfo' ) ) {
 			return wp_json_encode( array( 'error' => 'WordPress core functions not loaded for site info tool.' ) );
 		}
