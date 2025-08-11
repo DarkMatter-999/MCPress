@@ -25,6 +25,9 @@ spl_autoload_register(
 		} elseif ( isset( $split[1] ) && 'Tools' === $split[1] ) {
 			$base_dir .= 'classes/tools/class-';
 			$split[1]  = '';
+		} elseif ( isset( $split[1] ) && 'Providers' === $split[1] ) {
+			$base_dir .= 'classes/providers/class-';
+			$split[1]  = '';
 		} elseif ( isset( $split[1] ) && 'API' === $split[1] ) {
 			$base_dir .= 'classes/api/class-';
 			$split[1]  = '';

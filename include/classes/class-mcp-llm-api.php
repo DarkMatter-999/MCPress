@@ -15,9 +15,6 @@ use MCPress\Traits\Singleton;
 class MCP_LLM_API {
 	use Singleton;
 
-	const OPENAI_API_ENDPOINT = 'mcpress_openai_endpoint';
-	const OPENAI_API_KEY      = 'mcpress_openai_api_key';
-
 	/**
 	 * All tools which will be used by the LLMavailable_tools.
 	 *

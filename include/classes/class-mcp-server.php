@@ -9,6 +9,7 @@ namespace MCPress;
 
 use MCPress\Traits\Singleton;
 use MCPress\MCP_LLM_API;
+use MCPress\Provider_Registry;
 use WP_REST_Request;
 use WP_REST_Response;
 use WP_REST_Server;
@@ -94,83 +95,16 @@ class MCP_Server {
 	}
 
 	/**
-	 * Makes a request to the LLM API.
+	 * Routes a chat request through the currently selected provider.
 	 *
 	 * @param array  $messages The conversation messages array.
 	 * @param array  $tools Optional. An array of tool definitions.
 	 * @param string $tool_choice Optional. 'auto', 'none', or {'type': 'function', 'function': {'name': 'my_function'}}.
-	 * @return array|WP_Error Decoded LLM response or WP_Error.
+	 * @return array|WP_Error Normalized provider response or WP_Error.
 	 */
 	private function make_llm_request( $messages, $tools = array(), $tool_choice = 'auto' ) {
-		$api_endpoint = get_option( MCP_LLM_API::OPENAI_API_ENDPOINT );
-		$api_key      = get_option( MCP_LLM_API::OPENAI_API_KEY );
-
-		if ( empty( $api_endpoint ) || empty( $api_key ) ) {
-			return new WP_Error(
-				'mcp_llm_config_missing',
-				esc_html__( 'LLM API endpoint or key is not configured.', 'mcpress' )
-			);
-		}
-
-		$body = array(
-			'model'       => 'gpt-3.5-turbo',
-			'messages'    => $messages,
-			'temperature' => 0.7,
-		);
-
-		if ( ! empty( $tools ) ) {
-			$body['tools'] = $tools;
-		}
-		if ( ! empty( $tool_choice ) ) {
-			$body['tool_choice'] = $tool_choice;
-		}
-
-		$headers = array(
-			'Content-Type'  => 'application/json',
-			'Authorization' => 'Bearer ' . $api_key,
-		);
-
-		$response = wp_remote_post(
-			$api_endpoint,
-			array(
-				'headers' => $headers,
-				'body'    => wp_json_encode( $body ),
-				'timeout' => 45, // Increased timeout for external API calls.
-			)
-		);
-
-		if ( is_wp_error( $response ) ) {
-			return new WP_Error(
-				'mcp_llm_api_error',
-				esc_html__( 'Failed to connect to LLM API: ', 'mcpress' ) . $response->get_error_message(),
-				array( 'status' => 'http_error' )
-			);
-		}
-
-		$http_code     = wp_remote_retrieve_response_code( $response );
-		$response_body = wp_remote_retrieve_body( $response );
-		$decoded_body  = json_decode( $response_body, true );
-
-		if ( 200 !== $http_code ) {
-			$error_message = isset( $decoded_body['error']['message'] ) ? $decoded_body['error']['message'] : esc_html__( 'Unknown LLM API error.', 'mcpress' );
-
-			/*
-			* Translators:
-			* 1: HTTP status code (e.g., 400, 500).
-			* 2: Specific error message from the LLM API.
-			*/
-			$result = sprintf( esc_html__( 'LLM API returned HTTP %1$d: %2$s', 'mcpress' ), $http_code, $error_message );
-			return new WP_Error(
-				'mcp_llm_api_http_error',
-				$result,
-				array(
-					'status'  => $http_code,
-					'details' => $decoded_body,
-				)
-			);
-		}
-
-		return $decoded_body;
+		$registry = Provider_Registry::get_instance();
+		return $registry->send_chat( $messages, $tools, $tool_choice );
 	}
 
 	/**
@@ -251,8 +185,8 @@ class MCP_Server {
 			);
 		}
 
-		$response_content = isset( $llm_response['choices'][0]['message']['content'] ) ? $llm_response['choices'][0]['message']['content'] : '';
-		$tool_calls       = isset( $llm_response['choices'][0]['message']['tool_calls'] ) ? $llm_response['choices'][0]['message']['tool_calls'] : array();
+		$response_content = isset( $llm_response['content'] ) ? $llm_response['content'] : '';
+		$tool_calls       = isset( $llm_response['tool_calls'] ) ? $llm_response['tool_calls'] : array();
 
 		// Handle tool calls.
 		if ( ! empty( $tool_calls ) ) {
@@ -374,7 +308,7 @@ class MCP_Server {
 			);
 		}
 
-		$final_response_content = isset( $second_llm_response['choices'][0]['message']['content'] ) ? $second_llm_response['choices'][0]['message']['content'] : '';
+		$final_response_content = isset( $second_llm_response['content'] ) ? $second_llm_response['content'] : '';
 
 		if ( empty( $final_response_content ) ) {
 			$final_response_content = esc_html__( 'Tool execution completed and LLM did not provide a follow-up response.', 'mcpress' );
