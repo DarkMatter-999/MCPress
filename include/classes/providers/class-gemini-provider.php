@@ -83,7 +83,7 @@ class Gemini_Provider {
 		unset( $tools, $tool_choice ); // Not used in MVP.
 
 		$api_key  = isset( $options['api_key'] ) ? (string) $options['api_key'] : '';
-		$model    = isset( $options['model'] ) ? (string) $options['model'] : 'gemini-1.5-pro';
+		$model    = isset( $options['model'] ) ? (string) $options['model'] : 'gemini-2.5-flash';
 		$endpoint = isset( $options['endpoint'] ) && ! empty( $options['endpoint'] )
 			? (string) $options['endpoint']
 			: 'https://generativelanguage.googleapis.com/v1beta/models/' . rawurlencode( $model ) . ':generateContent';

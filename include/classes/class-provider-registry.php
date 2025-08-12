@@ -81,6 +81,7 @@ class Provider_Registry {
 	public function __construct() {
 		Providers\OpenAI_Compatible_Provider::get_instance();
 		Providers\Gemini_Provider::get_instance();
+		Providers\OpenRouter_Provider::get_instance();
 
 		add_action( 'init', array( $this, 'register' ) );
 	}

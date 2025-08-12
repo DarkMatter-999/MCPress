@@ -77,7 +77,7 @@ class OpenAI_Compatible_Provider {
 	 * @return array|WP_Error
 	 */
 	public function send_chat( array $messages, array $tools = array(), $tool_choice = 'auto', array $options = array() ) {
-		$endpoint = isset( $options['endpoint'] ) ? (string) $options['endpoint'] : '';
+		$endpoint = isset( $options['endpoint'] ) && ! empty( $options['endpoint'] ) ? (string) $options['endpoint'] : '';
 		$api_key  = isset( $options['api_key'] ) ? (string) $options['api_key'] : '';
 		$model    = isset( $options['model'] ) ? (string) $options['model'] : 'gpt-5';
 

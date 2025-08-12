@@ -158,8 +158,8 @@ class Settings {
 
 				// Save all providers' options (namespaced by provider_id).
 				$all_raw = isset( $_POST['mcpress_provider_options'] ) && is_array( $_POST['mcpress_provider_options'] )
-					? sanitize_text_field( wp_unslash( $_POST['mcpress_provider_options'] ) )
-					: array(); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.MissingUnslash -- already unslashed.
+						? wp_unslash( $_POST['mcpress_provider_options'] ) // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.MissingUnslash, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- already unslashed.
+					: array();
 
 				foreach ( array_keys( $providers_with_labels ) as $pid ) {
 					$schema = $registry->get_provider_options_schema( $pid );
