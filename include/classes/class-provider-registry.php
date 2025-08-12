@@ -43,9 +43,9 @@ class Provider_Registry {
 	const DEFAULT_PROVIDER = 'openai_compatible';
 
 	/**
-	 * Per-field provider option keys use the exact format: '{provider_id}_{field_key}' (no prefix).
+	 * Per-field provider option keys use the format: 'mcpress_{provider_id}_{field_key}'.
 	 */
-	const OPTION_PREFIX = '';
+	const OPTION_PREFIX = 'mcpress_';
 
 	/**
 	 * Ordered list of available provider IDs (eg: ['openai_compatible', 'openrouter']).
@@ -80,6 +80,7 @@ class Provider_Registry {
 	 */
 	public function __construct() {
 		Providers\OpenAI_Compatible_Provider::get_instance();
+		Providers\Gemini_Provider::get_instance();
 
 		add_action( 'init', array( $this, 'register' ) );
 	}
