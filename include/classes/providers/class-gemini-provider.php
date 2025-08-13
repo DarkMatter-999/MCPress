@@ -1,9 +1,9 @@
 <?php
 /**
- * Gemini Provider (chat-only MVP)
+ * Gemini Provider
  *
  * Implements a provider for Google's Generative Language (Gemini) API.
- * This MVP supports standard chat messaging (no tools/function-calling mapping).
+ * This MVP supports standard chat messaging with tools/function-calling mapping.
  *
  * API reference (v1beta):
  * - Endpoint: https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key=API_KEY
@@ -20,10 +20,10 @@ use MCPress\Traits\Singleton;
 use WP_Error;
 
 /**
- * Gemini Provider (chat-only MVP)
+ * Gemini Provider
  *
  * Implements a provider for Google's Generative Language (Gemini) API.
- * This MVP supports standard chat messaging (no tools/function-calling mapping).
+ * This MVP supports standard chat messaging with tools/function-calling mapping.
  */
 class Gemini_Provider {
 	use Singleton;
@@ -58,8 +58,8 @@ class Gemini_Provider {
 			'model'    => array(
 				'label'       => esc_html__( 'Model', 'mcpress' ),
 				'type'        => 'text',
-				'placeholder' => 'gemini-1.5-pro',
-				'description' => esc_html__( 'Model identifier (eg:, gemini-2.5-pro, gemini-2.5-flash).', 'mcpress' ),
+				'placeholder' => 'gemini-2.5-pro',
+				'description' => esc_html__( 'Model identifier (eg: gemini-2.5-pro, gemini-2.5-flash).', 'mcpress' ),
 			),
 			'endpoint' => array(
 				'label'       => esc_html__( 'API Endpoint (optional)', 'mcpress' ),
@@ -71,7 +71,7 @@ class Gemini_Provider {
 	}
 
 	/**
-	 * Execute a chat request via the Gemini API (chat-only, no tools).
+	 * Execute a chat request via the Gemini API.
 	 *
 	 * @param array        $messages     Normalized messages array (OpenAI-style).
 	 * @param array        $tools        Unused for Gemini MVP.
@@ -80,12 +80,10 @@ class Gemini_Provider {
 	 * @return array|WP_Error
 	 */
 	public function send_chat( array $messages, array $tools = array(), $tool_choice = 'auto', array $options = array() ) {
-		unset( $tools, $tool_choice ); // Not used in MVP.
-
-		$api_key  = isset( $options['api_key'] ) ? (string) $options['api_key'] : '';
-		$model    = isset( $options['model'] ) ? (string) $options['model'] : 'gemini-2.5-flash';
-		$endpoint = isset( $options['endpoint'] ) && ! empty( $options['endpoint'] )
-			? (string) $options['endpoint']
+		$api_key  = $options['api_key'] ?? '';
+		$model    = $options['model'] ?? 'gemini-2.5-flash';
+		$endpoint = ! empty( $options['endpoint'] )
+			? $options['endpoint']
 			: 'https://generativelanguage.googleapis.com/v1beta/models/' . rawurlencode( $model ) . ':generateContent';
 
 		if ( empty( $api_key ) ) {
@@ -100,42 +98,59 @@ class Gemini_Provider {
 		$system_prompts = array();
 
 		foreach ( $messages as $msg ) {
-			$role    = isset( $msg['role'] ) ? (string) $msg['role'] : 'user';
-			$content = isset( $msg['content'] ) ? (string) $msg['content'] : '';
-
-			if ( '' === $content ) {
-				continue;
-			}
+			$role = $msg['role'] ?? 'user';
 
 			if ( 'system' === $role ) {
-				$system_prompts[] = $content;
+				if ( ! empty( $msg['content'] ) ) {
+					$system_prompts[] = $msg['content'];
+				}
 				continue;
 			}
 
-			// Gemini roles: "user" or "model".
-			$gemini_role = 'user';
-			if ( 'assistant' === $role ) {
-				$gemini_role = 'model';
-			} elseif ( 'user' === $role ) {
-				$gemini_role = 'user';
-			} else {
-				// Fallback any unknown role to 'user'.
-				$gemini_role = 'user';
+			$gemini_role = ( 'assistant' === $role ) ? 'model'
+				: ( ( 'tool' === $role ) ? 'function' : 'user' );
+
+			$parts = array();
+
+			// Function call request (assistant/tool_calls in OpenAI).
+			if ( isset( $msg['tool_calls'] ) && is_array( $msg['tool_calls'] ) ) {
+				foreach ( $msg['tool_calls'] as $tc ) {
+					$args_obj = json_decode( $tc['function']['arguments'] ?? '{}', true );
+					if ( ! is_array( $args_obj ) ) {
+						$args_obj = array();
+					}
+					$parts[] = array(
+						'functionCall' => array(
+							'name' => $tc['function']['name'] ?? '',
+							'args' => (object) $args_obj,
+						),
+					);
+				}
+			} elseif ( 'function' === $gemini_role && isset( $msg['tool_call_id'] ) ) { // Function response (tool in OpenAI).
+				$parts[] = array(
+					'functionResponse' => array(
+						'name'     => $msg['name'] ?? '',
+						'response' => array(
+							'name'    => $msg['name'] ?? '',
+							'content' => $msg['content'] ?? '',
+						),
+					),
+				);
+			} elseif ( ! empty( $msg['content'] ) ) {  // Regular text.
+				$parts[] = array( 'text' => $msg['content'] );
 			}
 
-			$contents[] = array(
-				'role'  => $gemini_role,
-				'parts' => array(
-					array( 'text' => $content ),
-				),
-			);
+			if ( ! empty( $parts ) ) {
+				$contents[] = array(
+					'role'  => $gemini_role,
+					'parts' => $parts,
+				);
+			}
 		}
 
 		$body = array(
 			'contents'         => $contents,
-			'generationConfig' => array(
-				'temperature' => 0.7,
-			),
+			'generationConfig' => array( 'temperature' => 0.7 ),
 		);
 
 		if ( ! empty( $system_prompts ) ) {
@@ -147,15 +162,40 @@ class Gemini_Provider {
 			);
 		}
 
-		// Ensure API key is appended as query string parameter (?key=...).
+		// Convert tools from OpenAI format to Gemini.
+		if ( ! empty( $tools ) ) {
+			$body['tools'] = array(
+				array(
+					'function_declarations' => array_map(
+						function ( $tool ) {
+							$params = $tool['function']['parameters'] ?? array();
+
+							if ( isset( $params['properties'] ) && is_array( $params['properties'] ) ) {
+								$params['properties'] = (object) $params['properties'];
+							}
+
+							if ( is_array( $params ) ) {
+								$params = (object) $params;
+							}
+
+							return array(
+								'name'        => $tool['function']['name'],
+								'description' => $tool['function']['description'] ?? '',
+								'parameters'  => $params,
+							);
+						},
+						$tools
+					),
+				),
+			);
+		}
+
 		$request_url = add_query_arg( array( 'key' => $api_key ), $endpoint );
 
 		$response = wp_remote_post(
 			$request_url,
 			array(
-				'headers' => array(
-					'Content-Type' => 'application/json',
-				),
+				'headers' => array( 'Content-Type' => 'application/json' ),
 				'body'    => wp_json_encode( $body ),
 				'timeout' => 45,
 			)
@@ -164,8 +204,7 @@ class Gemini_Provider {
 		if ( is_wp_error( $response ) ) {
 			return new WP_Error(
 				'mcpress_llm_api_error',
-				esc_html__( 'Failed to connect to Gemini API: ', 'mcpress' ) . $response->get_error_message(),
-				array( 'status' => 'http_error' )
+				esc_html__( 'Failed to connect to Gemini API: ', 'mcpress' ) . $response->get_error_message()
 			);
 		}
 
@@ -175,7 +214,7 @@ class Gemini_Provider {
 
 		// Gemini errors may come with HTTP 4xx/5xx and/or an "error" structure in response.
 		if ( 200 !== $http_code ) {
-			$error_message = isset( $decoded_body['error']['message'] ) ? $decoded_body['error']['message'] : esc_html__( 'Unknown provider API error.', 'mcpress' );
+			$error_message = $decoded_body['error']['message'] ?? esc_html__( 'Unknown provider API error.', 'mcpress' );
 			return new WP_Error(
 				'mcpress_provider_http_error',
 				sprintf(
@@ -191,19 +230,31 @@ class Gemini_Provider {
 			);
 		}
 
-		// Extract content from first candidate.
-		$content_text = '';
-		if ( isset( $decoded_body['candidates'][0]['content']['parts'] ) && is_array( $decoded_body['candidates'][0]['content']['parts'] ) ) {
+		// Convert Gemini response into OpenAI-style.
+		$normalized_content = '';
+		$tool_calls         = array();
+
+		if ( ! empty( $decoded_body['candidates'][0]['content']['parts'] ) ) {
 			foreach ( $decoded_body['candidates'][0]['content']['parts'] as $part ) {
-				if ( isset( $part['text'] ) && is_string( $part['text'] ) ) {
-					$content_text .= $part['text'];
+				// Text.
+				if ( isset( $part['text'] ) ) {
+					$normalized_content .= $part['text'];
+				} elseif ( isset( $part['functionCall'] ) ) { // Function call.
+					$tool_calls[] = array(
+						'id'       => uniqid( 'call_' ),
+						'type'     => 'function',
+						'function' => array(
+							'name'      => $part['functionCall']['name'] ?? '',
+							'arguments' => wp_json_encode( $part['functionCall']['args'] ?? array() ),
+						),
+					);
 				}
 			}
 		}
 
 		return array(
-			'content'    => $content_text,
-			'tool_calls' => array(), // Tools not supported in this MVP.
+			'content'    => $normalized_content ? $normalized_content : null,
+			'tool_calls' => $tool_calls,
 			'raw'        => $decoded_body,
 		);
 	}
