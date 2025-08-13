@@ -33,7 +33,7 @@ class MCP_Server {
 	/**
 	 * Register custom REST API routes.
 	 */
-	public function register_routes() {
+	public function register_routes(): void {
 		register_rest_route(
 			self::REST_NAMESPACE,
 			'/chat',
@@ -66,14 +66,14 @@ class MCP_Server {
 				'args'                => array(
 					'tool_calls' => array(
 						'required'          => true,
-						'validate_callback' => function ( $param, $request, $key ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed, VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable
+						'validate_callback' => function ( $param ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed
 							return is_array( $param );
 						},
 						'sanitize_callback' => null, // Tools data is complex, let LLM API handle structure.
 					),
 					'messages'   => array(
 						'required'          => true,
-						'validate_callback' => function ( $param, $request, $key ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed, VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable
+						'validate_callback' => function ( $param ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed
 							return is_array( $param );
 						},
 						'sanitize_callback' => null, // Messages array is validated by LLM API.
@@ -86,10 +86,9 @@ class MCP_Server {
 	/**
 	 * Permission callback: Check if current user can read.
 	 *
-	 * @param WP_REST_Request $request Full details about the request.
 	 * @return bool True if the user has read capability, false otherwise.
 	 */
-	public function permission_check_read( WP_REST_Request $request ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found, VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable
+	public function permission_check_read(): bool { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found
 		return is_user_logged_in() && current_user_can( 'read' );
 	}
 
@@ -101,7 +100,7 @@ class MCP_Server {
 	 * @param string $tool_choice Optional. 'auto', 'none', or {'type': 'function', 'function': {'name': 'my_function'}}.
 	 * @return array|WP_Error Decoded LLM response or WP_Error.
 	 */
-	private function make_llm_request( $messages, $tools = array(), $tool_choice = 'auto' ) {
+	private function make_llm_request( $messages, $tools = array(), $tool_choice = 'auto' ): array|WP_Error {
 		$api_endpoint = get_option( MCP_LLM_API::OPENAI_API_ENDPOINT );
 		$api_key      = get_option( MCP_LLM_API::OPENAI_API_KEY );
 
@@ -177,10 +176,9 @@ class MCP_Server {
 	 * Callback for /chat-init endpoint.
 	 * Returns the initial system prompt and context.
 	 *
-	 * @param WP_REST_Request $request Full details about the request.
 	 * @return WP_REST_Response Response object.
 	 */
-	public function chat_init_callback( WP_REST_Request $request ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found, VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable
+	public function chat_init_callback(): WP_REST_Response { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found
 
 		/*
 		* Translators:
@@ -220,7 +218,7 @@ class MCP_Server {
 	 * @param WP_REST_Request $request Full details about the request.
 	 * @return WP_REST_Response Response object.
 	 */
-	public function chat_callback( WP_REST_Request $request ) {
+	public function chat_callback( WP_REST_Request $request ): WP_REST_Response {
 		$messages = $request->get_param( 'messages' ); // Expecting an array of messages.
 
 		if ( ! is_array( $messages ) || empty( $messages ) ) {
@@ -237,6 +235,7 @@ class MCP_Server {
 
 		$llm_api = MCP_LLM_API::get_instance();
 		$tools   = $llm_api->schemas; // Tool schemas for the LLM.
+		// $available_tools = $llm_api->tools; // PHP callable tools.
 
 		// First LLM call.
 		$llm_response = $this->make_llm_request( $messages, $tools );
@@ -291,7 +290,7 @@ class MCP_Server {
 	 * @param WP_REST_Request $request Full details about the request.
 	 * @return WP_REST_Response Response object.
 	 */
-	public function execute_tool_callback( WP_REST_Request $request ) {
+	public function execute_tool_callback( WP_REST_Request $request ): WP_REST_Response {
 		$tool_calls = $request->get_param( 'tool_calls' );
 		$messages   = $request->get_param( 'messages' );
 

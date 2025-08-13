@@ -1,34 +1,48 @@
 {
-  "name": "plugin-skeleton",
-  "version": "1.0.0",
-  "main": "index.js",
-  "scripts": {
-    "init": "node ./bin/init.js",
-    "start": "wp-scripts start",
-    "build": "wp-scripts build",
-    "prepare": "husky",
-    "lint": "npm-run-all --parallel lint:*",
-    "lint:css": "wp-scripts lint-style",
-    "lint:css:fix": "npm run lint:css -- --fix",
-    "lint:js": "wp-scripts lint-js",
-    "lint:js:fix": "npm run lint:js -- --fix",
-    "lint:php": "vendor/bin/phpcs .",
-    "lint:php:fix": "vendor/bin/phpcbf .",
-    "lint:staged": "lint-staged"
-  },
-  "author": "",
-  "license": "ISC",
-  "description": "",
-  "devDependencies": {
-    "@wordpress/scripts": "^30.18.0",
-    "husky": "^9.1.7",
-    "path": "^0.12.7",
-    "ts-loader": "^9.5.2",
-    "typescript": "^5.8.3",
-    "webpack-remove-empty-scripts": "^1.1.1"
-  },
-  "dependencies": {
-    "lint-staged": "^16.1.2",
-    "npm-run-all": "^4.1.5"
-  }
+	"name": "mcpress",
+	"version": "1.0.0",
+	"main": "index.js",
+	"type": "module",
+	"scripts": {
+		"init": "node ./bin/init.js",
+		"start": "wp-scripts start",
+		"build": "wp-scripts build",
+		"prepare": "husky",
+		"lint": "npm-run-all --parallel lint:*",
+		"lint:css": "wp-scripts lint-style",
+		"lint:css:fix": "npm run lint:css -- --fix",
+		"lint:js": "wp-scripts lint-js",
+		"lint:js:fix": "npm run lint:js -- --fix",
+		"lint:php": "vendor/bin/phpcs .",
+		"lint:php:fix": "vendor/bin/phpcbf .",
+		"lint:staged": "lint-staged"
+	},
+	"author": "",
+	"license": "ISC",
+	"description": "",
+	"devDependencies": {
+		"@eslint/css": "^0.10.0",
+		"@eslint/js": "^9.31.0",
+		"@eslint/json": "^0.13.0",
+		"@eslint/markdown": "^7.0.0",
+		"@wordpress/scripts": "^30.18.0",
+		"commander": "^14.0.0",
+		"eslint": "^8.57.1",
+		"eslint-plugin-react": "^7.37.5",
+		"globals": "^16.3.0",
+		"husky": "^9.1.7",
+		"inquirer": "^12.8.1",
+		"lint-staged": "^16.1.2",
+		"npm-run-all": "^4.1.5",
+		"ora": "^8.2.0",
+		"path": "^0.12.7",
+		"prettier": "^3.6.2",
+		"ts-loader": "^9.5.2",
+		"typescript": "^5.8.3",
+		"typescript-eslint": "^8.38.0",
+		"webpack-remove-empty-scripts": "^1.1.1"
+	},
+	"bin": {
+		"mcpress": "./bin/index.js"
+	}
 }
