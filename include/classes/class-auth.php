@@ -209,14 +209,19 @@ class Auth {
 			return $result;
 		}
 
-		$auth_header = sanitize_text_field( wp_unslash( $_SERVER['HTTP_AUTHORIZATION'] ) ?? wp_unslash( $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ) ?? '' ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotValidated -- Input is validated automatically.
+		$auth_header = '';
+		if ( isset( $_SERVER['HTTP_AUTHORIZATION'] ) ) {
+			$auth_header = sanitize_text_field( wp_unslash( $_SERVER['HTTP_AUTHORIZATION'] ) );
+		} elseif ( isset( $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ) ) {
+			$auth_header = sanitize_text_field( wp_unslash( $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ) );
+		}
 
 		if ( empty( $auth_header ) ) {
 			// No Authorization header — allow default WordPress behavior.
 			return null;
 		}
 
-		if ( ! preg_match( '/Bearer\s(\S+)/', $auth_header, $matches ) ) {
+		if ( ! preg_match( '/^Bearer\s+([A-Za-z0-9\-\._~\+\/]+=*)$/', $auth_header, $matches ) ) {
 			return new \WP_Error(
 				'jwt_auth_bad_auth_header',
 				__( 'Authorization header is malformed.', 'mcpress' ),
