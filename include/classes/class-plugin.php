@@ -29,5 +29,6 @@ class Plugin {
 		MCP_LLM_API::get_instance();
 		Tools_Loader::get_instance();
 		MCP_Server::get_instance();
+		Provider_Registry::get_instance();
 	}
 }
