@@ -14,7 +14,10 @@ use WP_REST_Response;
 use WP_REST_Server;
 use WP_Error;
 
-
+/**
+ * MCP Server Class
+ * Manages custom REST API endpoints for the MCP.
+ */
 class MCP_Server {
 	use Singleton;
 
