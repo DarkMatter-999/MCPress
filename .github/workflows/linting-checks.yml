@@ -1,0 +1,76 @@
+name: Linting Checks
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  javascript-linting:
+    name: JavaScript Linting
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install Node.js dependencies
+        run: npm ci
+
+      - name: Run JavaScript linting
+        run: npm run lint:js
+
+  php-linting:
+    name: PHP CodeSniffer
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+          tools: composer:v2
+          coverage: none
+
+      - name: Get Composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-
+
+      - name: Install Composer dependencies
+        run: composer install --prefer-dist --no-progress --no-suggest
+
+      - name: Run PHP CodeSniffer
+        run: vendor/bin/phpcs --standard=phpcs.xml
+
+  combined-linting:
+    name: All Linting Checks
+    runs-on: ubuntu-latest
+    needs: [javascript-linting, php-linting]
+    if: always()
+    
+    steps:
+      - name: Check linting results
+        run: |
+          if [[ "${{ needs.javascript-linting.result }}" == "failure" || "${{ needs.php-linting.result }}" == "failure" ]]; then
+            echo "One or more linting checks failed"
+            exit 1
+          else
+            echo "All linting checks passed"
+          fi

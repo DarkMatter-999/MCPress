@@ -38,7 +38,7 @@
 
     <!-- Set the target directories -->
     <file>mcpress.php</file>
-    <folder>includes</folder>
+    <file>include/</file>
 
     <!-- Set the excluded directories -->
     <exclude-pattern>vendor/*</exclude-pattern>
