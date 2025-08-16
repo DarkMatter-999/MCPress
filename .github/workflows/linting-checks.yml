@@ -54,10 +54,10 @@ jobs:
           restore-keys: ${{ runner.os }}-composer-
 
       - name: Install Composer dependencies
-        run: composer install --prefer-dist --no-progress --no-suggest --no-dev
+        run: composer install --prefer-dist --no-progress --no-suggest
 
       - name: Run PHP CodeSniffer
-        run: npm run lint:php
+        run: vendor/bin/phpcs .
 
   combined-linting:
     name: All Linting Checks
