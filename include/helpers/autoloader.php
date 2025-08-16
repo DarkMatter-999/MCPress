@@ -17,31 +17,67 @@ spl_autoload_register(
 		if ( 'MCPress' !== $split[0] ) {
 			return;
 		}
-		$base_dir = 'include/';
 
-		if ( isset( $split[1] ) && 'Traits' === $split[1] ) {
-			$base_dir .= 'traits/trait-';
-			$split[1]  = '';
-		} elseif ( isset( $split[1] ) && 'Tools' === $split[1] ) {
-			$base_dir .= 'classes/tools/class-';
-			$split[1]  = '';
-		} elseif ( isset( $split[1] ) && 'API' === $split[1] ) {
-			$base_dir .= 'classes/api/class-';
-			$split[1]  = '';
+		// Remove the MCPress namespace.
+		array_shift( $split );
+
+		$base_dir    = 'include/';
+		$file_prefix = '';
+
+		// Handle specific namespace mappings.
+		if ( ! empty( $split ) ) {
+			switch ( $split[0] ) {
+				case 'Traits':
+					$base_dir   .= 'traits/';
+					$file_prefix = 'trait-';
+					array_shift( $split ); // Remove 'Traits' from path.
+					break;
+				case 'Tools':
+					$base_dir   .= 'classes/tools/';
+					$file_prefix = 'class-';
+					array_shift( $split ); // Remove 'Tools' from path.
+					break;
+				case 'API':
+					$base_dir   .= 'classes/api/';
+					$file_prefix = 'class-';
+					array_shift( $split ); // Remove 'API' from path.
+					break;
+				case 'Helpers':
+					$base_dir   .= 'helpers/';
+					$file_prefix = '';
+					array_shift( $split ); // Remove 'Helpers' from path.
+					break;
+				default:
+					$base_dir   .= 'classes/';
+					$file_prefix = 'class-';
+					break;
+			}
 		} else {
-			$base_dir .= 'classes/class-';
+			$base_dir   .= 'classes/';
+			$file_prefix = 'class-';
 		}
 
-		$split[ count( $split ) - 1 ] = str_replace(
-			'_',
-			'-',
-			strtolower( $split[ count( $split ) - 1 ] ) . '.php'
-		);
+		// Handle subdirectories (everything except the last element which is the class name).
+		$class_name = array_pop( $split );
 
-		$split[0] = $base_dir;
+		// Convert remaining namespace parts to subdirectories.
+		if ( ! empty( $split ) ) {
+			$subdirs   = array_map(
+				function ( $part ) {
+					return strtolower( str_replace( '_', '-', $part ) );
+				},
+				$split
+			);
+			$base_dir .= implode( '/', $subdirs ) . '/';
+		}
 
-		$file_path = implode( '', $split );
+		// Convert class name to file name.
+		$file_name = $file_prefix . strtolower( str_replace( '_', '-', $class_name ) ) . '.php';
 
+		// Build the complete file path.
+		$file_path = $base_dir . $file_name;
+
+		// Try to include the file if it exists.
 		if ( file_exists( MCP_PLUGIN_PATH . $file_path ) ) {
 			include_once MCP_PLUGIN_PATH . $file_path;
 		}

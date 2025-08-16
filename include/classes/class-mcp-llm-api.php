@@ -44,7 +44,7 @@ class MCP_LLM_API {
 	/**
 	 * Register all the tools for the LLM.
 	 */
-	public function register() {
+	public function register(): void {
 		do_action( 'mcpress_register_tools' );
 
 		$this->tools = apply_filters( 'mcpress_available_tools', $this->tools );
