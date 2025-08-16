@@ -1,0 +1,63 @@
+<?php
+/**
+ * LLM Tool: {{TOOL_TITLE}} Tool
+ *
+ * @package MCPress
+ * @subpackage Tools\{{GROUP}}
+ */
+
+namespace MCPress\Tools\{{GROUP}};
+
+use MCPress\Traits\LLM_Tool;
+use MCPress\Traits\Singleton;
+
+/**
+ * LLM Tool: {{TOOL_TITLE}} Tool
+ */
+class {{CLASS_NAME}} {
+	use Singleton;
+	use LLM_Tool;
+
+	const NAME = '{{CONST_NAME}}';
+
+    /**
+     * Constructor for the {{CLASS_NAME}} class.
+     * Initializes the tool by registering it with the MCPress system.
+     * This method hooks into the 'mcpress_register_tools' action to ensure the tool is registered
+     * when the MCPress system is ready.
+     *
+     * @since 1.0.0
+     */
+	public function __construct() {
+		add_action( 'mcpress_register_tools', array( $this, 'register_llm_tool' ) );
+	}
+
+	/**
+	 * Defines the schema for the Site Info Tool.
+	 * This schema tells the LLM how to call this tool and what arguments it expects.
+	 *
+	 * @return array The schema definition for the LLM tool.
+	 */
+	public function schema(): array {
+		return array(
+			'name'        => self::NAME,
+			'description' => 'Describe what this tool does.',
+			'parameters'  => array(
+				'type'       => 'object',
+				'properties' => array(),
+				'required'   => array(),
+			),
+		);
+	}
+
+	/**
+	 * Executes the Site Info Tool functionality.
+	 * Retrieves the site title, description, and URL.
+	 *
+	 * @param array $arguments     Arguments passed to the tool from the LLM (expected to be empty).
+	 * @return string A JSON-encoded string containing the site information.
+	 */
+	public function tool(array $arguments): string|false {
+		return wp_json_encode( array( 'message' => 'Tool response here' ) );
+	}
+}

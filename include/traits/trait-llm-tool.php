@@ -47,7 +47,7 @@ trait LLM_Tool {
 	 *
 	 * @return void
 	 */
-	public function register_llm_tool() {
+	public function register_llm_tool(): void {
 		// Ensure the implementing class has defined and set static::$name.
 		if ( ! property_exists( static::class, 'name' ) || empty( static::$name ) ) {
 			return;

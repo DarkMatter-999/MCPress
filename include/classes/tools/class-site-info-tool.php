@@ -22,6 +22,8 @@ class Site_Info_Tool {
 	use Singleton;
 	use LLM_Tool;
 
+	const NAME = 'get_site_info';
+
 	/**
 	 * Constructor for the Site_Info_Tool.
 	 * This ensures that when the MCPress system is ready to register tools,
@@ -30,7 +32,6 @@ class Site_Info_Tool {
 	 * @return void
 	 */
 	public function __construct() {
-		self::$name = 'get_site_info';
 		add_action( 'mcpress_register_tools', array( $this, 'register_llm_tool' ) );
 	}
 
@@ -43,7 +44,7 @@ class Site_Info_Tool {
 	 */
 	public function schema(): array {
 		return array(
-			'name'        => self::$name,
+			'name'        => self::NAME,
 			'description' => 'Retrieves basic information about the current WordPress site, such as its title, description, and URL. This tool requires no arguments.',
 			'parameters'  => array(
 				'type'       => 'object',
@@ -57,10 +58,9 @@ class Site_Info_Tool {
 	 * Executes the Site Info Tool functionality.
 	 * Retrieves the site title, description, and URL.
 	 *
-	 * @param array $arguments     Arguments passed to the tool from the LLM (expected to be empty).
-	 * @return string A JSON-encoded string containing the site information.
+	 * @return string|false A JSON-encoded string containing the site information.
 	 */
-	public function tool( array $arguments ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found, VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable -- arguments not used in this class.
+	public function tool(): string|false {
 		if ( ! function_exists( 'get_bloginfo' ) ) {
 			return wp_json_encode( array( 'error' => 'WordPress core functions not loaded for site info tool.' ) );
 		}
