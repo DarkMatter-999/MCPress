@@ -153,4 +153,164 @@ class OpenAI_Compatible_Provider {
 			'raw'        => $decoded_body,
 		);
 	}
+
+	/**
+	 * Stream a chat/completions request via an OpenAI-compatible API.
+	 *
+	 * This forwards SSE chunks from the provider and invokes $on_chunk for each
+	 * piece of data. The callback is expected to accept an associative array with
+	 * keys like:
+	 * - [ 'type' => 'delta', 'content' => '...' ]
+	 * - [ 'type' => 'tool_call_delta', 'tool_calls' => [...] ]
+	 *
+	 * @param array         $messages     Normalized messages.
+	 * @param array         $tools        Optional tool schemas (OpenAI-style).
+	 * @param string|array  $tool_choice  Optional tool choice.
+	 * @param array         $options      Provider options (endpoint, api_key, model, etc.).
+	 * @param callable|null $on_chunk     Callback invoked for each streamed piece.
+	 * @return array|WP_Error             ['streamed' => true] on success or WP_Error.
+	 */
+	public function stream_chat( array $messages, array $tools = array(), $tool_choice = 'auto', array $options = array(), callable $on_chunk = null ) {
+		$endpoint = isset( $options['endpoint'] ) && ! empty( $options['endpoint'] ) ? (string) $options['endpoint'] : '';
+		$api_key  = isset( $options['api_key'] ) ? (string) $options['api_key'] : '';
+		$model    = isset( $options['model'] ) ? (string) $options['model'] : 'gpt-5';
+
+		if ( empty( $endpoint ) || empty( $api_key ) ) {
+			return new WP_Error(
+				'mcpress_provider_config_missing',
+				esc_html__( 'OpenAI-compatible endpoint or API key is not configured.', 'mcpress' )
+			);
+		}
+
+		if ( ! function_exists( 'curl_init' ) ) {
+			return new WP_Error(
+				'mcpress_curl_missing',
+				esc_html__( 'cURL is not available for streaming requests.', 'mcpress' )
+			);
+		}
+
+		$body = array(
+			'model'       => $model,
+			'messages'    => $messages,
+			'temperature' => 0.7,
+			'stream'      => true,
+		);
+
+		if ( ! empty( $tools ) ) {
+			$body['tools'] = $tools;
+		}
+		if ( ! empty( $tool_choice ) ) {
+			$body['tool_choice'] = $tool_choice;
+		}
+
+		$ch = curl_init( $endpoint ); // phpcs:ignore WordPress.WP.AlternativeFunctions.curl_curl_init
+		curl_setopt_array(  // phpcs:ignore WordPress.WP.AlternativeFunctions.curl_curl_setopt_array
+			$ch,
+			array(
+				CURLOPT_POST           => true,
+				CURLOPT_HTTPHEADER     => array(
+					'Content-Type: application/json',
+					'Authorization: Bearer ' . $api_key,
+				),
+				CURLOPT_POSTFIELDS     => wp_json_encode( $body ),
+				CURLOPT_RETURNTRANSFER => false, // stream to callback.
+				CURLOPT_TIMEOUT        => 0,     // let it stream.
+				CURLOPT_WRITEFUNCTION  => function ( $curl, $chunk ) use ( $on_chunk ) {
+					static $buffer = '';
+					$buffer       .= $chunk;
+
+					// Process SSE frames, handling both "\n\n" and "\r\n\r\n" separators.
+					while ( true ) {
+						$pos = strpos( $buffer, "\n\n" );
+						$sep = "\n\n";
+						if ( false === $pos ) {
+							$pos = strpos( $buffer, "\r\n\r\n" );
+							$sep = "\r\n\r\n";
+						}
+						if ( false === $pos ) {
+							break;
+						}
+
+						$frame  = substr( $buffer, 0, $pos );
+						$buffer = substr( $buffer, $pos + strlen( $sep ) );
+
+						$lines = preg_split( "/\r?\n/", trim( (string) $frame ) );
+						if ( ! is_array( $lines ) ) {
+							continue;
+						}
+
+						foreach ( $lines as $line ) {
+							$line = trim( (string) $line );
+							if ( '' === $line ) {
+								continue;
+							}
+							if ( 0 !== strpos( $line, 'data:' ) ) {
+								continue;
+							}
+							$payload = trim( substr( $line, 5 ) );
+
+							if ( '[DONE]' === $payload ) {
+								// Upstream signals end; caller will emit a final "done".
+								continue;
+							}
+
+							$decoded = json_decode( $payload, true );
+							if ( ! is_array( $decoded ) ) {
+								continue;
+							}
+
+							$choice = isset( $decoded['choices'][0] ) ? $decoded['choices'][0] : null;
+							if ( empty( $choice ) || ! is_array( $choice ) ) {
+								continue;
+							}
+
+							$delta = isset( $choice['delta'] ) ? $choice['delta'] : array();
+
+							// Stream content deltas.
+							if ( array_key_exists( 'content', $delta ) && null !== $delta['content'] ) {
+								if ( is_callable( $on_chunk ) ) {
+									$on_chunk(
+										array(
+											'type'    => 'delta',
+											'content' => (string) $delta['content'],
+										)
+									);
+								}
+							}
+
+							// Optional: stream tool_call deltas.
+							if ( isset( $delta['tool_calls'] ) && is_array( $delta['tool_calls'] ) ) {
+								if ( is_callable( $on_chunk ) ) {
+									$on_chunk(
+										array(
+											'type'       => 'tool_call_delta',
+											'tool_calls' => $delta['tool_calls'],
+										)
+									);
+								}
+							}
+						}
+					}
+
+					return strlen( $chunk );
+				},
+				CURLOPT_HEADERFUNCTION => function ( $ch_ref, $header_line ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found
+					return strlen( (string) $header_line );
+				},
+			)
+		);
+
+		$ok = curl_exec( $ch ); // phpcs:ignore WordPress.WP.AlternativeFunctions.curl_curl_exec
+		if ( false === $ok ) {
+			$err = curl_error( $ch ); // phpcs:ignore WordPress.WP.AlternativeFunctions.curl_curl_error
+			curl_close( $ch ); // phpcs:ignore WordPress.WP.AlternativeFunctions.curl_curl_close
+			return new WP_Error(
+				'mcpress_llm_api_error',
+				esc_html__( 'Failed to stream from provider: ', 'mcpress' ) . $err
+			);
+		}
+		curl_close( $ch ); // phpcs:ignore WordPress.WP.AlternativeFunctions.curl_curl_close
+
+		return array( 'streamed' => true );
+	}
 }

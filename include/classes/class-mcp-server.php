@@ -29,6 +29,7 @@ class MCP_Server {
 	 */
 	public function __construct() {
 		add_action( 'rest_api_init', array( $this, 'register_routes' ) );
+		add_filter( 'rest_pre_serve_request', array( $this, 'serve_streaming_response' ), 10, 4 );
 	}
 
 	/**
@@ -172,7 +173,35 @@ class MCP_Server {
 		$llm_api = MCP_LLM_API::get_instance();
 		$tools   = $llm_api->schemas; // Tool schemas for the LLM.
 
-		// First LLM call.
+		// Streaming detection: Accept header, explicit header, or query param.
+		$is_stream     = false;
+		$accept_header = (string) $request->get_header( 'accept' );
+		if ( false !== stripos( $accept_header, 'text/event-stream' ) ) {
+			$is_stream = true;
+		}
+		$explicit_stream = (string) $request->get_header( 'x-mcpress-stream' );
+		if ( '1' === $explicit_stream ) {
+			$is_stream = true;
+		}
+		$stream_param = (string) $request->get_param( 'stream' );
+		if ( '1' === $stream_param ) {
+			$is_stream = true;
+		}
+
+		if ( $is_stream ) {
+			// Stash payload for streaming responder; it will take over in rest_pre_serve_request.
+			$request->set_param(
+				'__mcpress_stream_payload',
+				array(
+					'messages'    => $messages,
+					'tools'       => $tools,
+					'tool_choice' => 'auto',
+				)
+			);
+			return new WP_REST_Response( null, 200 );
+		}
+
+		// First LLM call (non-streaming).
 		$llm_response = $this->make_llm_request( $messages, $tools );
 
 		if ( is_wp_error( $llm_response ) ) {
@@ -190,7 +219,6 @@ class MCP_Server {
 
 		// Handle tool calls.
 		if ( ! empty( $tool_calls ) ) {
-			// Add the assistant's tool_calls message to history for the next LLM call.
 			$messages[] = array(
 				'role'       => 'assistant',
 				'tool_calls' => $tool_calls,
@@ -207,7 +235,6 @@ class MCP_Server {
 				200
 			);
 		} else {
-			// No tool calls, just normal LLM response.
 			return new WP_REST_Response(
 				array(
 					'success' => true,
@@ -216,6 +243,163 @@ class MCP_Server {
 				200
 			);
 		}
+	}
+
+	/**
+	 * Streaming response server for /chat when requested via headers.
+	 *
+	 * Accumulates tool_call_delta events into full tool_calls before emitting a final
+	 * tool_calls event, so the frontend can confirm execution with complete arguments.
+	 *
+	 * @param mixed           $served  Whether the request has already been served.
+	 * @param mixed           $result  Result to send to the client. Ignored for streaming.
+	 * @param WP_REST_Request $request The request.
+	 * @param WP_REST_Server  $server  Server instance.
+	 * @return bool True if we streamed the response; original $served otherwise.
+	 */
+	public function serve_streaming_response( $served, $result, $request, $server ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed, VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable
+		$payload = $request->get_param( '__mcpress_stream_payload' );
+		if ( empty( $payload ) ) {
+			return $served;
+		}
+
+		nocache_headers();
+		header( 'Content-Type: text/event-stream; charset=utf-8' );
+		header( 'Cache-Control: no-cache, no-transform' );
+		header( 'Connection: keep-alive' );
+		header( 'X-Accel-Buffering: no' );
+		header( 'Content-Encoding: none' );
+
+		@ini_set( 'implicit_flush', '1' ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged, WordPress.PHP.IniSet.Risky
+		ob_implicit_flush( true );
+		ignore_user_abort( true );
+		@set_time_limit( 0 ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+
+		while ( ob_get_level() > 0 ) {
+			ob_end_flush();
+		}
+		@ini_set( 'output_buffering', 'off' ); // phpcs:ignore WordPress.PHP.IniSet.Risky, WordPress.PHP.NoSilencedErrors.Discouraged,
+		@ini_set( 'zlib.output_compression', 0 ); // phpcs:ignore WordPress.PHP.IniSet.Risky, WordPress.PHP.NoSilencedErrors.Discouraged
+
+		$send = function ( array $event ) {
+			$type = isset( $event['type'] ) ? $event['type'] : 'message';
+			echo 'event: ' . $type . "\n"; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Output comes from LLM directly.
+			echo 'data: ' . wp_json_encode( $event ) . "\n\n"; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Output comes from LLM directly.
+			flush();
+		};
+
+		echo ':' . str_repeat( ' ', 2048 ) . "\n\n"; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Constant string output.
+		flush();
+
+		$registry = Provider_Registry::get_instance();
+		$provider = $registry->get_current_provider();
+		$options  = $registry->get_current_provider_options();
+
+		// Accumulator for assembling complete tool calls from streaming deltas (indexed by tool call index).
+		$tool_call_accumulator = array();
+
+		$on_chunk = function ( array $chunk ) use ( $send, &$tool_call_accumulator ) {
+			// Capture tool call deltas to build a final list.
+			if ( isset( $chunk['type'] ) && 'tool_call_delta' === $chunk['type'] && ! empty( $chunk['tool_calls'] ) && is_array( $chunk['tool_calls'] ) ) {
+				foreach ( $chunk['tool_calls'] as $delta_call ) {
+					$idx = isset( $delta_call['index'] ) ? $delta_call['index'] : null;
+					if ( null === $idx ) {
+						continue;
+					}
+					if ( ! isset( $tool_call_accumulator[ $idx ] ) ) {
+						$tool_call_accumulator[ $idx ] = array(
+							'id'       => isset( $delta_call['id'] ) ? $delta_call['id'] : '',
+							'type'     => isset( $delta_call['type'] ) ? $delta_call['type'] : 'function',
+							'function' => array(
+								'name'      => isset( $delta_call['function']['name'] ) ? $delta_call['function']['name'] : '',
+								'arguments' => '',
+							),
+						);
+					}
+					// Update ID if provided.
+					if ( isset( $delta_call['id'] ) && '' !== $delta_call['id'] ) {
+						$tool_call_accumulator[ $idx ]['id'] = $delta_call['id'];
+					}
+					// Update name if present.
+					if ( isset( $delta_call['function']['name'] ) && '' !== $delta_call['function']['name'] ) {
+						$tool_call_accumulator[ $idx ]['function']['name'] = $delta_call['function']['name'];
+					}
+					// Append argument fragment.
+					if ( isset( $delta_call['function']['arguments'] ) && '' !== $delta_call['function']['arguments'] ) {
+						$tool_call_accumulator[ $idx ]['function']['arguments'] .= $delta_call['function']['arguments'];
+					}
+				}
+			}
+
+			// Forward original chunk for live updates (content or deltas).
+			$send( $chunk );
+		};
+
+		if ( $provider && method_exists( $provider, 'stream_chat' ) ) {
+			$result = $provider->stream_chat(
+				(array) $payload['messages'],
+				isset( $payload['tools'] ) ? (array) $payload['tools'] : array(),
+				$payload['tool_choice'] ?? 'auto',
+				$options,
+				$on_chunk
+			);
+
+			if ( is_wp_error( $result ) ) {
+				$send(
+					array(
+						'type'    => 'error',
+						'message' => $result->get_error_message(),
+					)
+				);
+			} elseif ( ! empty( $tool_call_accumulator ) ) {
+				// Emit consolidated tool_calls after streaming if any were built.
+				ksort( $tool_call_accumulator );
+				$final_tool_calls = array_values( $tool_call_accumulator );
+				$send(
+					array(
+						'type'       => 'tool_calls',
+						'tool_calls' => $final_tool_calls,
+					)
+				);
+			}
+
+			$send( array( 'type' => 'done' ) );
+			return true;
+		}
+
+		// Fallback: non-streaming single response.
+		$result = $registry->send_chat(
+			(array) $payload['messages'],
+			isset( $payload['tools'] ) ? (array) $payload['tools'] : array(),
+			$payload['tool_choice'] ?? 'auto',
+			$options
+		);
+
+		if ( is_wp_error( $result ) ) {
+			$send(
+				array(
+					'type'    => 'error',
+					'message' => $result->get_error_message(),
+				)
+			);
+		} else {
+			$send(
+				array(
+					'type'    => 'delta',
+					'content' => (string) ( $result['content'] ?? '' ),
+				)
+			);
+			if ( ! empty( $result['tool_calls'] ) ) {
+				$send(
+					array(
+						'type'       => 'tool_calls',
+						'tool_calls' => $result['tool_calls'],
+					)
+				);
+			}
+		}
+		$send( array( 'type' => 'done' ) );
+		return true;
 	}
 
 	/**
