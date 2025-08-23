@@ -364,7 +364,8 @@ class MCP_Server {
 			}
 
 			$send( array( 'type' => 'done' ) );
-			return true;
+			// Terminate execution after streaming to avoid further header modifications by REST server.
+			exit;
 		}
 
 		// Fallback: non-streaming single response.
